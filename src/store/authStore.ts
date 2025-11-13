@@ -56,12 +56,27 @@ export interface UserStats {
 // 🧠 Zustand Store Interface
 // ============================================================
 
+// Login credentials interface
+export interface LoginCredentials {
+  email: string;
+  password: string;
+}
+
+// Auth response interface (assuming API returns token and user info)
+export interface AuthResponse {
+  access_token: string;
+  token_type: string;
+  user: User;
+}
+
 interface UserStore {
   users: User[];
   user: User | null;
   stats: UserStats | null;
   loading: boolean;
   error: string | null;
+  token: string | null;
+  isAuthenticated: boolean;
 
   // Actions
   fetchUsers: (filters?: {
@@ -76,6 +91,9 @@ interface UserStore {
   suspendUser: (id: number) => Promise<void>;
   activateUser: (id: number) => Promise<void>;
   fetchUserStats: () => Promise<void>;
+  login: (credentials: LoginCredentials) => Promise<void>;
+  logout: () => void;
+  checkAuth: () => void;
 }
 
 // ============================================================
@@ -88,6 +106,57 @@ export const useUserStore = create<UserStore>((set, get) => ({
   stats: null,
   loading: false,
   error: null,
+  token: localStorage.getItem("authToken") || null,
+  isAuthenticated: !!localStorage.getItem("authToken"),
+
+  // ============================================================
+  // AUTHENTICATION ACTIONS
+  // ============================================================
+
+  login: async (credentials) => {
+    set({ loading: true, error: null });
+    try {
+      const res = await api.post<AuthResponse>("/auth/login", credentials);
+      const { access_token, user } = res.data;
+      localStorage.setItem("authToken", access_token);
+      set({ user, token: access_token, isAuthenticated: true, loading: false });
+      // Set the Authorization header for future requests
+      api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+    } catch (err: any) {
+      set({ error: err.message, loading: false });
+      throw err; // Re-throw to allow components to catch login errors
+    }
+  },
+
+  logout: () => {
+    localStorage.removeItem("authToken");
+    set({ user: null, token: null, isAuthenticated: false, users: [], stats: null });
+    // Remove the Authorization header
+    delete api.defaults.headers.common['Authorization'];
+  },
+
+  checkAuth: async () => {
+    const token = localStorage.getItem("authToken");
+    if (token) {
+      set({ loading: true });
+      try {
+        // Verify token and fetch user data if token is valid
+        // Assuming there's an endpoint like /auth/me to get current user
+        const res = await api.get<User>("/auth/me", {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        set({ user: res.data, token, isAuthenticated: true, loading: false });
+        api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+      } catch (err) {
+        console.error("Auth check failed:", err);
+        localStorage.removeItem("authToken");
+        set({ user: null, token: null, isAuthenticated: false, loading: false });
+        delete api.defaults.headers.common['Authorization'];
+      }
+    } else {
+      set({ isAuthenticated: false, loading: false });
+    }
+  },
 
   // ============================================================
   // FETCH USERS (GET /users)

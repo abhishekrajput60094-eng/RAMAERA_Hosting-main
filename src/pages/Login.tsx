@@ -1,53 +1,38 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Server } from 'lucide-react';
-import { useAuth } from '../contexts/NewAuthContext';
+import { useUserStore } from '../store/authStore'; // Import useUserStore
 
 export function Login() {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState(''); // Changed from username to email
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const login = useUserStore((state) => state.login); // Get the login action from the store
+  const user = useUserStore((state) => state.user); // Get the user from the store
   const navigate = useNavigate();
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-  try {
-    // fake auth or call your API directly
-    // navigate anywhere you want:
-    navigate('/dashboard');
-  } catch (err: any) {
-    setError(err.message || 'Failed to sign in');
-  } finally {
-    setLoading(false);
-  }
-};
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
 
-  // const handleSubmit = async (e: React.FormEvent) => {
-  //   e.preventDefault();
-  //   setError('');
-  //   setLoading(true);
-
-  //   try {
-  //     const email = username.includes('@') ? username : `${username}@test.com`;
-  //     await signIn(email, password);
-
-  //     const { data: profile } = await supabase
-  //       .from('users_profiles')
-  //       .select('role')
-  //       .eq('email', email)
-  //       .maybeSingle();
-
-  //     const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin';
-  //     navigate(isAdmin ? '/admin' : '/dashboard');
-  //   } catch (err: any) {
-  //     setError(err.message || 'Failed to sign in');
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
+    try {
+      await login({ email, password }); // Call the login action with email and password
+      // After successful login, the user state in the store will be updated
+      // We can then check the user's role for navigation
+      const loggedInUser = useUserStore.getState().user; // Get the updated user state
+      if (loggedInUser?.role === 'admin' || loggedInUser?.role === 'super_admin') {
+        navigate('/admin');
+      } else {
+        navigate('/dashboard');
+      }
+    } catch (err: any) {
+      setError(err.response?.data?.detail || err.message || 'Failed to sign in');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-950 via-cyan-950 to-slate-950 flex items-center justify-center px-4 py-12">
@@ -71,15 +56,15 @@ const handleSubmit = async (e: React.FormEvent) => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <div>
               <label className="block text-sm font-semibold text-slate-200 mb-2">
-                Username
+                Email
               </label>
               <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
+                type="email" // Changed type to email
+                value={email} // Changed from username to email
+                onChange={(e) => setEmail(e.target.value)} // Changed from setUsername to setEmail
                 required
                 className="w-full px-4 py-3 bg-slate-800 border border-cyan-500/30 rounded-lg focus:ring-2 focus:ring-cyan-500 focus:border-transparent text-white placeholder-slate-400"
-                placeholder="Enter username"
+                placeholder="Enter your email" // Changed placeholder
               />
             </div>
 
@@ -137,7 +122,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div className="bg-slate-950/50 rounded-lg p-3 border border-red-500/20">
                   <p className="text-xs font-semibold text-red-400 mb-1">Admin Account:</p>
                   <p className="text-sm text-slate-300">
-                    <span className="text-cyan-400">Username:</span> admin1234
+                    <span className="text-cyan-400">Email:</span> admin@example.com
                   </p>
                   <p className="text-sm text-slate-300">
                     <span className="text-cyan-400">Password:</span> 1234
@@ -149,7 +134,7 @@ const handleSubmit = async (e: React.FormEvent) => {
                 <div className="bg-slate-950/50 rounded-lg p-3 border border-green-500/20">
                   <p className="text-xs font-semibold text-green-400 mb-1">User Account:</p>
                   <p className="text-sm text-slate-300">
-                    <span className="text-cyan-400">Username:</span> user1234
+                    <span className="text-cyan-400">Email:</span> user@example.com
                   </p>
                   <p className="text-sm text-slate-300">
                     <span className="text-cyan-400">Password:</span> 1234

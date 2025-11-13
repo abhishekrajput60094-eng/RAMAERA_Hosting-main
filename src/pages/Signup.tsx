@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { Server } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useUserStore } from '../store/authStore'; // Import useUserStore
 
 export function Signup() {
   const [searchParams] = useSearchParams();
@@ -12,7 +12,7 @@ export function Signup() {
   const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signUp } = useAuth();
+  const createUser = useUserStore((state) => state.createUser); // Get the createUser action from the store
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,10 +39,10 @@ export function Signup() {
     setLoading(true);
 
     try {
-      await signUp(email, password, fullName, referralCode);
-      navigate('/dashboard');
+      await createUser({ email, full_name: fullName, password, referral_code: referralCode || null });
+      navigate('/login'); // Navigate to login after successful signup
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      setError(err.response?.data?.detail || err.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
