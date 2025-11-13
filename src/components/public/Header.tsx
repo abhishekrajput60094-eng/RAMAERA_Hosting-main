@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Server, Menu, X, ChevronDown } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUserStore } from '../../store/authStore';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
-  const { user } = useAuth();
+  const { user } = useUserStore();
   const location = useLocation();
 
   useEffect(() => {
@@ -90,14 +90,14 @@ export function Header() {
           </div>
 
           <div className="hidden md:flex items-center space-x-4">
-            {/* {user ? ( */}
+            {user ? (
               <Link
                 to="/dashboard"
                 className="px-4 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 text-white rounded-lg hover:from-cyan-400 hover:to-teal-400 transition shadow-lg shadow-cyan-500/50"
               >
                 Dashboard
               </Link>
-            {/* ) : ( */}
+            ) : (
               <>
                 <Link
                   to="/login"
@@ -112,7 +112,7 @@ export function Header() {
                   Get Started
                 </Link>
               </>
-            {/* )} */}
+            )}
           </div>
 
           <button

@@ -160,16 +160,16 @@ import {
   Users,
   Gift
 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useUserStore } from '../store/authStore';
 
 export function DashboardLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { signOut, profile, isAdmin } = useAuth();
+  const { logout, user, getIsAdmin } = useUserStore();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
+    await logout();
     navigate('/');
   };
 
@@ -231,7 +231,7 @@ export function DashboardLayout() {
               );
             })}
 
-            {isAdmin && (
+            {getIsAdmin() && (
               <Link
                 to="/admin"
                 className="flex items-center space-x-3 px-4 py-3 rounded-lg text-slate-300 hover:bg-slate-950 transition border-t border-cyan-500/20 mt-4 pt-4"
@@ -245,14 +245,14 @@ export function DashboardLayout() {
           <div className="border-t border-cyan-500/20 p-4">
             <div className="flex items-center space-x-3 px-4 py-3 bg-slate-950 rounded-lg mb-2">
               <div className="w-10 h-10 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white font-semibold">
-                {profile?.full_name?.charAt(0) || 'U'}
+                {user?.full_name?.charAt(0) || 'U'}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
-                  {profile?.full_name || 'User'}
+                  {user?.full_name || 'User'}
                 </p>
                 <p className="text-xs text-slate-400 capitalize">
-                  {profile?.role?.replace('_', ' ')}
+                  {user?.role?.replace('_', ' ')}
                 </p>
               </div>
             </div>

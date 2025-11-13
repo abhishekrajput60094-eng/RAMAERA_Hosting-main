@@ -12,7 +12,7 @@ export function Signup() {
   const [referralCode, setReferralCode] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const createUser = useUserStore((state) => state.createUser); // Get the createUser action from the store
+  const signUp = useUserStore((state) => state.signUp); // Get the signUp action from the store
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,8 +39,8 @@ export function Signup() {
     setLoading(true);
 
     try {
-      await createUser({ email, full_name: fullName, password, referral_code: referralCode || null });
-      navigate('/login'); // Navigate to login after successful signup
+      await signUp(email, password, fullName, referralCode || undefined);
+      navigate('/'); // Navigate to home page after successful signup
     } catch (err: any) {
       setError(err.response?.data?.detail || err.message || 'Failed to create account');
     } finally {

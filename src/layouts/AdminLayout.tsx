@@ -12,16 +12,16 @@ import {
   Gift,
   Package
 } from 'lucide-react';
-import { useAuth } from '../contexts/AuthContext';
+import { useUserStore } from '../store/authStore';
 
 export function AdminLayout() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { signOut, profile } = useAuth();
+  const { logout, user } = useUserStore();
   const location = useLocation();
   const navigate = useNavigate();
 
   const handleSignOut = async () => {
-    await signOut();
+    await logout();
     navigate('/');
   };
 
@@ -96,14 +96,14 @@ export function AdminLayout() {
           <div className="border-t border-red-500/20 p-4">
             <div className="flex items-center space-x-3 px-4 py-3 bg-slate-950 rounded-lg mb-2">
               <div className="w-10 h-10 bg-gradient-to-r from-red-500 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold">
-                {profile?.full_name?.charAt(0) || 'A'}
+                {user?.full_name?.charAt(0) || 'A'}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-white truncate">
-                  {profile?.full_name || 'Admin'}
+                  {user?.full_name || 'Admin'}
                 </p>
                 <p className="text-xs text-red-400 capitalize">
-                  {profile?.role?.replace('_', ' ')}
+                  {user?.role?.replace('_', ' ')}
                 </p>
               </div>
             </div>

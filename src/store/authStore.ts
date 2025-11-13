@@ -1,5 +1,6 @@
 import { create } from "zustand";
 import api from "../api/axiosInstance";
+import { UserRole, AccountStatus } from "../types";
 
 // ============================================================
 // 🧩 Interfaces
@@ -7,15 +8,18 @@ import api from "../api/axiosInstance";
 
 // User model matching FastAPI schema
 export interface User {
-  id: number;
+  id: string;
   email: string;
   full_name: string;
-  role: string;
-  account_status: string;
+  role: UserRole;
+  account_status: AccountStatus;
   phone?: string | null;
-  company?: string | null;
+  company_name?: string | null;
+  address?: string;
+  city?: string;
+  country?: string;
   referral_code?: string | null;
-  referred_by?: number | null;
+  referred_by?: string | null; // Changed to string to match id type
   subscription_status?: string;
   created_at?: string;
   updated_at?: string;
@@ -84,16 +88,19 @@ interface UserStore {
     role?: string;
     status?: string;
   }) => Promise<void>;
-  getUserById: (id: number) => Promise<void>;
+  getUserById: (id: string) => Promise<void>; // Changed id type to string
   createUser: (data: UserCreate) => Promise<void>;
-  updateUser: (id: number, data: UserUpdate) => Promise<void>;
-  deleteUser: (id: number) => Promise<void>;
-  suspendUser: (id: number) => Promise<void>;
-  activateUser: (id: number) => Promise<void>;
+  updateUser: (id: string, data: UserUpdate) => Promise<void>; // Changed id type to string
+  deleteUser: (id: string) => Promise<void>; // Changed id type to string
+  suspendUser: (id: string) => Promise<void>; // Changed id type to string
+  activateUser: (id: string) => Promise<void>; // Changed id type to string
   fetchUserStats: () => Promise<void>;
   login: (credentials: LoginCredentials) => Promise<void>;
   logout: () => void;
   checkAuth: () => void;
+  signUp: (email: string, password: string, fullName: string, referralCode?: string) => Promise<void>;
+  getIsAdmin: () => boolean;
+  getIsSuperAdmin: () => boolean;
 }
 
 // ============================================================
@@ -128,6 +135,21 @@ export const useUserStore = create<UserStore>((set, get) => ({
     }
   },
 
+  signUp: async (email, password, fullName, referralCode) => {
+    set({ loading: true, error: null });
+    try {
+        const payload = { email, password, full_name: fullName, referral_code: referralCode };
+        const res = await api.post<AuthResponse>("/auth/register", payload);
+        const { access_token, user } = res.data;
+        localStorage.setItem("authToken", access_token);
+        set({ user, token: access_token, isAuthenticated: true, loading: false });
+        api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
+    } catch (err: any) {
+        set({ error: err.message, loading: false });
+        throw err;
+    }
+  },
+
   logout: () => {
     localStorage.removeItem("authToken");
     set({ user: null, token: null, isAuthenticated: false, users: [], stats: null });
@@ -157,6 +179,9 @@ export const useUserStore = create<UserStore>((set, get) => ({
       set({ isAuthenticated: false, loading: false });
     }
   },
+
+  getIsAdmin: () => get().user?.role === 'admin' || get().user?.role === 'super_admin',
+  getIsSuperAdmin: () => get().user?.role === 'super_admin',
 
   // ============================================================
   // FETCH USERS (GET /users)

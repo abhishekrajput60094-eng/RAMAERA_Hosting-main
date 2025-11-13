@@ -1,17 +1,17 @@
 import { useState } from 'react';
 import { User, Lock, Bell, Shield, Mail } from 'lucide-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useUserStore } from '../../store/authStore';
 
 export function Settings() {
-  const { profile } = useAuth();
+  const { user } = useUserStore();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'notifications'>('profile');
   const [isSaving, setIsSaving] = useState(false);
 
   const [profileData, setProfileData] = useState({
-    fullName: profile?.full_name || '',
-    email: '',
-    phone: '',
-    company: '',
+    fullName: user?.full_name || '',
+    email: user?.email || '',
+    phone: user?.phone || '',
+    company: user?.company_name || '',
   });
 
   const [securityData, setSecurityData] = useState({
@@ -105,11 +105,11 @@ export function Settings() {
             <form onSubmit={handleProfileSubmit} className="space-y-6">
               <div className="flex items-center space-x-4 pb-6 border-b border-cyan-500/30">
                 <div className="w-20 h-20 bg-gradient-to-r from-cyan-500 to-teal-500 rounded-full flex items-center justify-center text-white text-3xl font-semibold">
-                  {profile?.full_name?.charAt(0) || 'U'}
+                  {user?.full_name?.charAt(0) || 'U'}
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-white">{profile?.full_name}</h3>
-                  <p className="text-sm text-slate-400 capitalize">{profile?.role?.replace('_', ' ')}</p>
+                  <h3 className="text-lg font-semibold text-white">{user?.full_name}</h3>
+                  <p className="text-sm text-slate-400 capitalize">{user?.role?.replace('_', ' ')}</p>
                 </div>
               </div>
 
